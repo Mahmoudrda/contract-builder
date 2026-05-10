@@ -367,7 +367,7 @@ function renderContract() {
 
     <p><span class="clause-num">10.5</span> أيام التصوير الإضافية تتجاوز العدد المتفق عليه تُحتسب بـ <span class="bold">ثلاثة آلاف جنيه مصري (3,000 EGP)</span> لليوم، تُسدَّد مقدمًا.</p>
 
-    <p><span class="clause-num">10.6</span> لا تشمل أيام التصوير معدات احترافية أو ممثلين أو مواقع مدفوعة الأجر؛ وتُتحمَّل أي تكاليف من هذا النوع بالكامل من قِبل العميل.</p>
+    <p><span class="clause-num">10.6</span> لا تشمل أيام التصوير معدات احترافية أو ممثلين (من خارج شركة تي ار ار) أو مواقع مدفوعة الأجر؛ وتُتحمَّل أي تكاليف من هذا النوع بالكامل من قِبل العميل.</p>
 
     <hr class="rule">
 
@@ -472,6 +472,11 @@ function renderContract() {
     </div>
 
   </section>
+
+  <div class="page-sig-strip">
+    <div>توقيع الطرف الأول (The Reel Recipe): <span class="sig-line-inline"></span></div>
+    <div>توقيع الطرف الثاني (${clientName}): <span class="sig-line-inline"></span></div>
+  </div>
   `;
 }
 
@@ -502,15 +507,75 @@ function renderServices() {
 
 // ============= EVENT WIRING =============
 function bindForm() {
-  // Top-level fields
-  const fields = ['clientName', 'startDate', 'endDate', 'numberOfMonths', 'numberOfPayments', 'totalPayment', 'paymentPerMonth'];
-  fields.forEach(id => {
+  function computeMonths() {
+    const start = new Date(state.startDate);
+    const end = new Date(state.endDate);
+    if (!isNaN(start) && !isNaN(end) && end > start)
+      return Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24 * 30.4375)));
+    return state.numberOfMonths;
+  }
+
+  function syncField(id, value) {
     const el = document.getElementById(id);
-    el.addEventListener('input', () => {
-      const v = el.value;
-      state[id] = (id === 'clientName' || id === 'startDate' || id === 'endDate') ? v : (Number(v) || 0);
+    if (el && document.activeElement !== el) el.value = value;
+  }
+
+  // Dates → auto-compute months, payments, total
+  ['startDate', 'endDate'].forEach(id => {
+    document.getElementById(id).addEventListener('input', e => {
+      state[id] = e.target.value;
+      const months = computeMonths();
+      state.numberOfMonths = months;
+      state.numberOfPayments = months;
+      state.totalPayment = Math.round((state.paymentPerMonth || 0) * months);
+      syncField('numberOfMonths', months);
+      syncField('numberOfPayments', months);
+      syncField('totalPayment', state.totalPayment);
       update();
     });
+  });
+
+  document.getElementById('clientName').addEventListener('input', e => {
+    state.clientName = e.target.value;
+    update();
+  });
+
+  // numberOfMonths (manual) → cascade to payments + total
+  document.getElementById('numberOfMonths').addEventListener('input', e => {
+    const months = Math.max(1, Number(e.target.value) || 1);
+    state.numberOfMonths = months;
+    state.numberOfPayments = months;
+    state.totalPayment = Math.round((state.paymentPerMonth || 0) * months);
+    syncField('numberOfPayments', months);
+    syncField('totalPayment', state.totalPayment);
+    update();
+  });
+
+  // numberOfPayments (manual) → cascade to total
+  document.getElementById('numberOfPayments').addEventListener('input', e => {
+    const payments = Math.max(1, Number(e.target.value) || 1);
+    state.numberOfPayments = payments;
+    state.totalPayment = Math.round((state.paymentPerMonth || 0) * payments);
+    syncField('totalPayment', state.totalPayment);
+    update();
+  });
+
+  // paymentPerMonth (manual) → cascade to total
+  document.getElementById('paymentPerMonth').addEventListener('input', e => {
+    const perMonth = Number(e.target.value) || 0;
+    state.paymentPerMonth = perMonth;
+    state.totalPayment = Math.round(perMonth * (state.numberOfPayments || 1));
+    syncField('totalPayment', state.totalPayment);
+    update();
+  });
+
+  // totalPayment (manual) → cascade to per-month
+  document.getElementById('totalPayment').addEventListener('input', e => {
+    const total = Number(e.target.value) || 0;
+    state.totalPayment = total;
+    state.paymentPerMonth = Math.round(total / (state.numberOfPayments || 1));
+    syncField('paymentPerMonth', state.paymentPerMonth);
+    update();
   });
 
   // Add service

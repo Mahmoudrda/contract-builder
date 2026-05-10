@@ -806,6 +806,8 @@
     margin: 18mm 14mm;
   }
 
+  .page-sig-strip { display: none; }
+
   @media print {
     body { background: white; }
     .topbar, .sidebar { display: none !important; }
@@ -816,7 +818,31 @@
       margin: 0;
       box-shadow: none;
       padding: 0;
+      padding-bottom: 18mm;
     }
     .article, .signatures, .doc table { page-break-inside: avoid; }
     .cover { page-break-after: always; min-height: auto; }
+
+    .page-sig-strip {
+      display: flex;
+      justify-content: space-between;
+      position: fixed;
+      bottom: 5mm;
+      left: 14mm;
+      right: 14mm;
+      border-top: 1px solid var(--rule);
+      padding-top: 2.5mm;
+      font-size: 7.5pt;
+      font-family: 'Inter', sans-serif;
+      color: var(--ink-5);
+      direction: rtl;
+    }
+
+    .sig-line-inline {
+      display: inline-block;
+      width: 60mm;
+      border-bottom: 1px solid var(--ink-5);
+      margin-right: 4px;
+      vertical-align: middle;
+    }
   }
