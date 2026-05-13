@@ -171,6 +171,11 @@ function renderContract() {
       <div>Cairo, Egypt</div>
       <div>${startAr}</div>
     </div>
+
+    <div class="cover-sig-strip">
+      <div>توقيع الطرف الأول (The Reel Recipe): <span class="sig-line-inline"></span></div>
+      <div>توقيع الطرف الثاني (${clientName}): <span class="sig-line-inline"></span></div>
+    </div>
   </section>
 
   <!-- BODY -->
